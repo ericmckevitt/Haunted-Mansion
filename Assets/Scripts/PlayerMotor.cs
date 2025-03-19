@@ -5,8 +5,8 @@ public class PlayerMotor : MonoBehaviour
     private CharacterController controller;
     private Vector3 playerVelocity;
     private bool isGrounded;
-    public float speed = 5f;
-    public float gravity = -9.8f;
+    public float speed = 6f;
+    public float gravity = -20.0f;
     public float jumpHeight = 1.5f;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
