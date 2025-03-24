@@ -8,11 +8,22 @@ public class PossessedObject : MonoBehaviour
 
     private bool canMove = true;
 
+    public void StartPosession(Transform newPlayer) {
+        player = newPlayer;
+        enabled = true;
+    }
+
+    public void StopPosession()
+    {
+        enabled = false;
+    }
+
     // Update is called once per frame
     void Update()
     {
-        if (Vector3.Distance(transform.position, player.position) > detectionRange)
-            return; // Skip logic if out of range
+        if (player == null) return;
+
+        if (Vector3.Distance(transform.position, player.position) > detectionRange) return; 
 
         if (CanPlayerSeeMe())
         {
@@ -33,7 +44,6 @@ public class PossessedObject : MonoBehaviour
     {
         Vector3 directionToPlayer = (player.position - transform.position).normalized;
 
-        // 1. Raycast check for obstacles
         if (Physics.Raycast(transform.position, directionToPlayer, out RaycastHit hit, detectionRange))
         {
             if (hit.transform != player)
@@ -42,7 +52,7 @@ public class PossessedObject : MonoBehaviour
             }
         }
 
-        // 2. Dot product check for player's facing direction
+        // Dot product check for player's facing direction
         float dotProduct = Vector3.Dot(player.forward, -directionToPlayer);
         return dotProduct > 0.5f; // Fine-tune this threshold
     }
