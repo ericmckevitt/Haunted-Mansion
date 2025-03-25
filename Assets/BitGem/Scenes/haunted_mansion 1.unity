@@ -8881,6 +8881,29 @@ MonoBehaviour:
   - {fileID: 2097204443}
   - {fileID: 1646175013}
   gameOverText: {fileID: 272874814}
+--- !u!136 &601855913
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 601855895}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 2
+  m_Radius: 0.5000002
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: -0.0000014305115, y: 0, z: 0}
 --- !u!1 &604431299 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 100016, guid: 6e04be2c0b41f4d50ae5f6d825f3b6cf, type: 3}
@@ -30655,6 +30678,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 9036881350185565235, guid: 015aa2272d68d41d3a766bae581625a5, type: 3}
       insertIndex: -1
       addedObject: {fileID: 601855908}
+    - targetCorrespondingSourceObject: {fileID: 9036881350185565235, guid: 015aa2272d68d41d3a766bae581625a5, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 601855913}
   m_SourcePrefab: {fileID: 100100000, guid: 015aa2272d68d41d3a766bae581625a5, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

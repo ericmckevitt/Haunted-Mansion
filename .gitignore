@@ -75,3 +75,6 @@ crashlytics-build.properties
 
 #### Exclude asset set
 /Assets/BitGem/Haunted_Mansion
+.vscode/extensions.json
+.vscode/launch.json
+.vscode/settings.json

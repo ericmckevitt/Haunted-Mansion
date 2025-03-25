@@ -34,7 +34,7 @@ public class PossessedObject : MonoBehaviour
             canMove = true;  // Move when not visible
         }
 
-        if (canMove)
+        if (canMove && enabled)
         {
             MoveTowardPlayer();
         }
@@ -55,6 +55,21 @@ public class PossessedObject : MonoBehaviour
         // Dot product check for player's facing direction
         float dotProduct = Vector3.Dot(player.forward, -directionToPlayer);
         return dotProduct > 0.5f; // Fine-tune this threshold
+    }
+
+    // Detect collision with player
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Player")) // ensure the "Player" tag
+        {
+            Debug.Log("Possessed object hit the player!");
+
+            other.GetComponent<PlayerHealth>().TakeDamage(); // Call TakeDamage function in player health to lose a heart
+            other.GetComponent<PlayerScore>().TakeDamage(); // Call TakeDamage function in player score to lose points
+
+            StopPosession();
+        }
+
     }
 
     void MoveTowardPlayer()
