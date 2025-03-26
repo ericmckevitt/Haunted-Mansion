@@ -4,7 +4,7 @@ public class PossessedObject : MonoBehaviour
 {
     public Transform player;     // Reference to the player
     public float moveSpeed = 2f; // Movement speed of the possessed object
-    public float detectionRange = 15f; // Range within which the object can move
+    public float detectionRange = 30f; // Range within which the object can move
 
     private bool canMove = true;
 
