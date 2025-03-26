@@ -11,6 +11,7 @@ public class PossessedObject : MonoBehaviour
     public void StartPosession(Transform newPlayer) {
         player = newPlayer;
         enabled = true;
+        Debug.Log("Possessed object: " + gameObject.name);
     }
 
     public void StopPosession()
@@ -76,6 +77,6 @@ public class PossessedObject : MonoBehaviour
     {
         Vector3 direction = (player.position - transform.position).normalized;
         transform.position += direction * moveSpeed * Time.deltaTime;
-        Debug.Log("Moving toward player!");
+        // Debug.Log("Moving toward player!");
     }
 }
