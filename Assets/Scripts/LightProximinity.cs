@@ -7,10 +7,12 @@ public class LightProximinity : MonoBehaviour
     private bool playerNearby = false;
     private bool isFixingLight = false;
     public InputManager instance = null;
+    private PlayerScore playerScore;
 
     void Start()
     {
         instance = GetComponent<InputManager>();
+        playerScore = GetComponent<PlayerScore>();
     }
 
     void OnTriggerEnter(Collider other)
@@ -36,7 +38,7 @@ public class LightProximinity : MonoBehaviour
     IEnumerator FixLight()
     {
         isFixingLight = true;
-        DisablePlayerInput(); // You can connect this to your input system later
+        DisablePlayerInput(); 
 
         yield return new WaitForSeconds(4f);
 
@@ -44,11 +46,18 @@ public class LightProximinity : MonoBehaviour
         if (!lightChild.gameObject.activeSelf)
         {
             lightChild.gameObject.SetActive(true);
+
+            PlayerScore score = FindObjectOfType<PlayerScore>();
+            int currentIndex = score.GetLightsFixed(); // Expose lightsFixed via getter
+            score.FixLight(currentIndex);
+
             Debug.Log("Light turned on after fixing!");
         }
 
         EnablePlayerInput(); // Re-enable controls after delay
         isFixingLight = false;
+        // playerScore.IncremementLightsFixed();
+
     }
 
     void DisablePlayerInput()
