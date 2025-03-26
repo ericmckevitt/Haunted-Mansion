@@ -12,11 +12,12 @@ public class PossessedObject : MonoBehaviour
         player = newPlayer;
         enabled = true;
         Debug.Log("Possessed object: " + gameObject.name);
+        Update(); //seems to catch bug where it dosent start moving again right away
     }
 
     public void StopPosession()
     {
-        enabled = false;
+        enabled = false; 
     }
 
     // Update is called once per frame
@@ -77,6 +78,6 @@ public class PossessedObject : MonoBehaviour
     {
         Vector3 direction = (player.position - transform.position).normalized;
         transform.position += direction * moveSpeed * Time.deltaTime;
-        // Debug.Log("Moving toward player!");
+        Debug.Log("Moving toward player!");
     }
 }
