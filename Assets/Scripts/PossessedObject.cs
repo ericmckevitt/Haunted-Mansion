@@ -78,6 +78,5 @@ public class PossessedObject : MonoBehaviour
     {
         Vector3 direction = (player.position - transform.position).normalized;
         transform.position += direction * moveSpeed * Time.deltaTime;
-        Debug.Log("Moving toward player!");
     }
 }

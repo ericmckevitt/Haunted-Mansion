@@ -15,7 +15,10 @@ public class LightManager : MonoBehaviour
         Debug.Log($"{lightObjects.Count} lights found.");
 
         foreach (GameObject light in lightObjects) {
-            light.transform.GetChild(0).gameObject.SetActive(false); 
+            Transform lightTransform = light.transform;
+            for (int i = 0; i < lightTransform.childCount; i++) {
+                lightTransform.GetChild(i).gameObject.SetActive(false);
+            }
         }
     }
 }

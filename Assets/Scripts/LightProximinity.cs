@@ -42,22 +42,27 @@ public class LightProximinity : MonoBehaviour
 
         yield return new WaitForSeconds(4f);
 
-        Transform lightChild = transform.GetChild(0);
-        if (!lightChild.gameObject.activeSelf)
+        bool anyLightWasOff = false;
+        for (int i = 0; i < transform.childCount; i++)
         {
-            lightChild.gameObject.SetActive(true);
+            GameObject child = transform.GetChild(i).gameObject;
+            if (!child.activeSelf)
+            {
+                child.SetActive(true);
+                anyLightWasOff = true;
+            }
+        }
 
+        if (anyLightWasOff)
+        {
             PlayerScore score = FindObjectOfType<PlayerScore>();
-            int currentIndex = score.GetLightsFixed(); // Expose lightsFixed via getter
+            int currentIndex = score.GetLightsFixed();
             score.FixLight(currentIndex);
-
             Debug.Log("Light turned on after fixing!");
         }
 
         EnablePlayerInput(); // Re-enable controls after delay
         isFixingLight = false;
-        // playerScore.IncremementLightsFixed();
-
     }
 
     void DisablePlayerInput()
