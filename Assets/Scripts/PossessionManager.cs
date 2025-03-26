@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class PossessionManager : MonoBehaviour
 {
-    public float possessionInterval = 60f;
+    public float possessionInterval = 30f;
     public Transform player;
     private List<GameObject> possessableObjects = new List<GameObject>();
     private PossessedObject currentPosessedScript;
@@ -46,5 +46,5 @@ public class PossessionManager : MonoBehaviour
 
             yield return new WaitForSeconds(possessionInterval);
         }
-    }
+    } 
 }
