@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using UnityEngine.InputSystem;
+using TMPro;
 
 public class LightProximinity : MonoBehaviour
 {
@@ -8,11 +9,14 @@ public class LightProximinity : MonoBehaviour
     private bool isFixingLight = false;
     public InputManager instance = null;
     private PlayerScore playerScore;
+    public TextMeshProUGUI lightFixingText;
 
     void Start()
     {
         instance = GetComponent<InputManager>();
         playerScore = GetComponent<PlayerScore>();
+        lightFixingText = GameObject.Find("FixingLightIndicator").GetComponent<TextMeshProUGUI>();
+        lightFixingText.enabled = false;
     }
 
     void OnTriggerEnter(Collider other)
@@ -38,6 +42,7 @@ public class LightProximinity : MonoBehaviour
     IEnumerator FixLight()
     {
         isFixingLight = true;
+        lightFixingText.enabled = true;
         DisablePlayerInput(); 
 
         yield return new WaitForSeconds(4f);
@@ -63,6 +68,7 @@ public class LightProximinity : MonoBehaviour
 
         EnablePlayerInput(); // Re-enable controls after delay
         isFixingLight = false;
+        lightFixingText.enabled = false;
     }
 
     void DisablePlayerInput()
