@@ -11,7 +11,7 @@ public class PossessedObject : MonoBehaviour
     public void StartPosession(Transform newPlayer) {
         player = newPlayer;
         enabled = true;
-        Debug.Log("Possessed object: " + gameObject.name);
+        // Debug.Log("Possessed object: " + gameObject.name);
         Update(); //seems to catch bug where it dosent start moving again right away
     }
 
