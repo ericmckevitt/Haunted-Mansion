@@ -27,6 +27,9 @@ public class InputManager : MonoBehaviour
             if (inputEnabled)
                 motor.Jump();
         };
+
+        // Disable cursor pointer
+        Cursor.visible = false;
     }
 
     void FixedUpdate()
