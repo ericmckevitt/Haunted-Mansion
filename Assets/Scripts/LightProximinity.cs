@@ -33,7 +33,7 @@ public class LightProximinity : MonoBehaviour
 
     void Update()
     {
-        if (playerNearby && Input.GetKeyDown(KeyCode.L) && !isFixingLight)
+        if (playerNearby && Input.GetKeyDown(KeyCode.Return) && !isFixingLight)
         {
             StartCoroutine(FixLight());
         }
