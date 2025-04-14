@@ -12,7 +12,7 @@ public class TriggerDoorController : MonoBehaviour
     {
         if (Vector3.Distance(transform.position, player.position) <= detectionRange)
         {
-            if (Input.GetKeyDown(KeyCode.L))
+            if (Input.GetKeyDown(KeyCode.Return))
             {
                 if (isDoorOpen)
                 {
