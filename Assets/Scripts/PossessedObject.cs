@@ -5,19 +5,50 @@ public class PossessedObject : MonoBehaviour
     public Transform player;     // Reference to the player
     public float moveSpeed = 2f; // Movement speed of the possessed object
     public float detectionRange = 30f; // Range within which the object can move
+    public AudioClip scapeSound;
+    public StartMenu gameState;
 
     private bool canMove = true;
+    private AudioSource audioSource;
+
+    void Start()
+    {
+        // Get reference to audio source on this object
+        audioSource = GetComponent<AudioSource>();
+        if (gameState == null)
+        {
+            gameState = FindObjectOfType<StartMenu>();
+        }
+    }
 
     public void StartPosession(Transform newPlayer) {
         player = newPlayer;
         enabled = true;
-        // Debug.Log("Possessed object: " + gameObject.name);
+
+        // Ensure we have a working AudioSource
+        if (audioSource == null)
+            audioSource = GetComponent<AudioSource>();
+
+        if (audioSource != null && scapeSound != null)
+        {
+            audioSource.clip = scapeSound;
+            // Only play if the game has started
+            if (gameState != null && gameState.gameStarted && !audioSource.isPlaying)
+            {
+                audioSource.Play();
+            }
+        }
+
+        Debug.Log("Possessed object: " + gameObject.name);
         Update(); //seems to catch bug where it dosent start moving again right away
     }
 
     public void StopPosession()
     {
         enabled = false; 
+
+        if (audioSource != null && audioSource.isPlaying)
+            audioSource.Stop();
     }
 
     // Update is called once per frame
@@ -25,7 +56,19 @@ public class PossessedObject : MonoBehaviour
     {
         if (player == null) return;
 
-        if (Vector3.Distance(transform.position, player.position) > detectionRange) return; 
+        // Only move/play audio if the game has started
+        if (gameState == null || !gameState.gameStarted)
+        {
+            // If the game hasn't started, stop the audio and do nothing else
+            if (audioSource != null && audioSource.isPlaying)
+                audioSource.Stop();
+
+            return;
+        }
+
+        // Check distance
+        float dist = Vector3.Distance(transform.position, player.position);
+        if (dist > detectionRange) return;
 
         if (CanPlayerSeeMe())
         {
@@ -39,6 +82,26 @@ public class PossessedObject : MonoBehaviour
         if (canMove && enabled)
         {
             MoveTowardPlayer();
+
+            // Normalize dist so that:
+            //   dist <= minDistance => 0
+            //   dist >= maxDistance => 1
+            Debug.Log(dist);
+            float normalized = Mathf.InverseLerp(31f, 300f, dist);
+
+            // Volume is 1 when close, 0 when far
+            float volume = 1f - Mathf.Pow(normalized, 2f); 
+            volume = Mathf.Clamp01(volume);
+
+            audioSource.volume = volume;
+
+            if (audioSource != null && !audioSource.isPlaying)
+                audioSource.Play();
+        }
+        else
+        {
+            if (audioSource != null && audioSource.isPlaying)
+                audioSource.Pause();
         }
     }
 
@@ -64,12 +127,11 @@ public class PossessedObject : MonoBehaviour
     {
         if (other.CompareTag("Player")) // ensure the "Player" tag
         {
+            StopPosession();
             Debug.Log("Possessed object hit the player!");
 
             other.GetComponent<PlayerHealth>().TakeDamage(); // Call TakeDamage function in player health to lose a heart
             other.GetComponent<PlayerScore>().TakeDamage(); // Call TakeDamage function in player score to lose points
-
-            StopPosession();
         }
 
     }

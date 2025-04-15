@@ -6,6 +6,7 @@ public class PossessionManager : MonoBehaviour
 {
     public float possessionInterval = 30f;
     public Transform player;
+    public AudioClip scrapingSound;
     private List<GameObject> possessableObjects = new List<GameObject>();
     private PossessedObject currentPosessedScript;
 
@@ -42,6 +43,20 @@ public class PossessionManager : MonoBehaviour
                 currentPosessedScript = newPossessedObject.AddComponent<PossessedObject>();
             }
 
+            // 🔊 Dynamically add AudioSource if needed
+            AudioSource audioSource = newPossessedObject.GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = newPossessedObject.AddComponent<AudioSource>();
+                audioSource.clip = scrapingSound;
+                audioSource.loop = true;
+                audioSource.playOnAwake = false;
+                audioSource.spatialBlend = 1f;
+                audioSource.minDistance = 2f;
+                audioSource.maxDistance = 20f;
+            }
+            currentPosessedScript.scapeSound = scrapingSound;
+            
             currentPosessedScript.StartPosession(player);
 
             yield return new WaitForSeconds(possessionInterval);

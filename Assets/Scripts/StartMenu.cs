@@ -12,7 +12,7 @@ public class StartMenu : MonoBehaviour
     [SerializeField] private TMP_Dropdown difficultyDropdown;
     // Or a regular Dropdown if you're not using TextMeshPro
 
-    private bool gameStarted = false;
+    public bool gameStarted = false; // changed public so i could reference srape sound off
     private PlayerHealth playerHealth;
 
     private void Start()
