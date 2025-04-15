@@ -45,7 +45,8 @@ public class StartMenu : MonoBehaviour
     {
         // 'value' corresponds to the index of the dropdown option
         // Implement your own logic here for difficulty
-        switch(value)
+
+        switch(difficultyDropdown.value)
         {
             case 0: // e.g. "Easy"
                 Debug.Log("Difficulty set to Easy");
