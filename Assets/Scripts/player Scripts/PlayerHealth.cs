@@ -7,10 +7,30 @@ public class PlayerHealth : MonoBehaviour
     public GameObject gameOverText; // Assign a UI Text object for "Game Over"
     
     private int lives;
+    public StartMenu startMenu;
 
     void Start()
     {
-        lives = hearts.Length; // Set lives to the number of heart images
+        if (startMenu == null)
+        {
+            startMenu = FindObjectOfType<StartMenu>();
+        }
+        int difficulty = startMenu.GetDifficulty();
+
+        switch (difficulty)
+        {
+            case 0: lives = 5; break; // Easy
+            case 1: lives = 4; break; // Medium
+            case 2: lives = 3; break; // Hard
+            default: lives = 5; break;
+        }
+
+        // Enable only relevant hearts based on difficulty
+        for (int i = 0; i < hearts.Length; i++)
+        {
+            hearts[i].enabled = i < lives;
+        }
+
         gameOverText.SetActive(false); // Hide Game Over text at the start
     }
 
@@ -32,5 +52,23 @@ public class PlayerHealth : MonoBehaviour
     {
         gameOverText.SetActive(true); // Show the Game Over text
         // Optionally, you can stop player movement or restart the level here
+    }
+
+    public void SetLives() {
+        int difficulty = startMenu.GetDifficulty();
+
+        switch (difficulty)
+        {
+            case 0: lives = 5; break; // Easy
+            case 1: lives = 4; break; // Medium
+            case 2: lives = 3; break; // Hard
+            default: lives = 5; break;
+        }
+
+        // Enable only relevant hearts based on difficulty
+        for (int i = 0; i < hearts.Length; i++)
+        {
+            hearts[i].enabled = i < lives;
+        } 
     }
 }

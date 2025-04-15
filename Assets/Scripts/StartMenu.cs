@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI; // If you use Button/Dropdown from the built-in UI
-using TMPro;          // If you use TextMeshPro elements
+using TMPro;
+using System;          // If you use TextMeshPro elements
 
 public class StartMenu : MonoBehaviour
 {
@@ -12,11 +13,17 @@ public class StartMenu : MonoBehaviour
     // Or a regular Dropdown if you're not using TextMeshPro
 
     private bool gameStarted = false;
+    private PlayerHealth playerHealth;
 
     private void Start()
     {
         // Freeze the game by setting timescale to 0
         Time.timeScale = 0f;
+
+        if (playerHealth == null)
+        {
+            playerHealth = FindObjectOfType<PlayerHealth>();
+        }
 
         Cursor.visible = true;
 
@@ -45,6 +52,7 @@ public class StartMenu : MonoBehaviour
     {
         // 'value' corresponds to the index of the dropdown option
         // Implement your own logic here for difficulty
+        playerHealth.SetLives();
 
         switch(difficultyDropdown.value)
         {
@@ -58,5 +66,10 @@ public class StartMenu : MonoBehaviour
                 Debug.Log("Difficulty set to Hard");
                 break;
         }
+    }
+
+    public int GetDifficulty()
+    {
+        return difficultyDropdown != null ? difficultyDropdown.value : 0;
     }
 }
