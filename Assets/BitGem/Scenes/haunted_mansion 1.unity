@@ -25012,7 +25012,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: 9bf3d153241234e0c9c0623296b2d92b, type: 3}
       propertyPath: m_TagString
-      value: Possessable
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: 9bf3d153241234e0c9c0623296b2d92b, type: 3}
       propertyPath: m_RootOrder

@@ -56,46 +56,43 @@ public class PossessedObject : MonoBehaviour
     {
         if (player == null) return;
 
-        // Only move/play audio if the game has started
         if (gameState == null || !gameState.gameStarted)
         {
-            // If the game hasn't started, stop the audio and do nothing else
             if (audioSource != null && audioSource.isPlaying)
                 audioSource.Stop();
-
             return;
         }
 
-        // Check distance
         float dist = Vector3.Distance(transform.position, player.position);
-        if (dist > detectionRange) return;
+        if (dist > detectionRange)
+        {
+            if (audioSource != null)
+                audioSource.volume = 0f;
+            return;
+        }
 
         if (CanPlayerSeeMe())
         {
-            canMove = false; // Freeze when visible
+            canMove = false;
         }
         else
         {
-            canMove = true;  // Move when not visible
+            canMove = true;
         }
 
         if (canMove && enabled)
         {
             MoveTowardPlayer();
 
-            // Normalize dist so that:
-            //   dist <= minDistance => 0
-            //   dist >= maxDistance => 1
-            Debug.Log(dist);
-            float normalized = Mathf.InverseLerp(31f, 300f, dist);
+            float proximity = detectionRange - dist; // Closer => larger value
+            float k = 0.2f; // Curve factor; increase to steepen volume ramp-up
 
-            // Volume is 1 when close, 0 when far
-            float volume = 1f - Mathf.Pow(normalized, 2f); 
+            // Exponential volume curve: starts low, ramps up quickly near the player
+            float volume = 1f - Mathf.Exp(-k * proximity);
             volume = Mathf.Clamp01(volume);
-
             audioSource.volume = volume;
 
-            if (audioSource != null && !audioSource.isPlaying)
+            if (!audioSource.isPlaying)
                 audioSource.Play();
         }
         else
@@ -103,7 +100,10 @@ public class PossessedObject : MonoBehaviour
             if (audioSource != null && audioSource.isPlaying)
                 audioSource.Pause();
         }
+
+        Debug.Log($"Distance: {dist}, Volume: {audioSource.volume}");
     }
+
 
     bool CanPlayerSeeMe()
     {
