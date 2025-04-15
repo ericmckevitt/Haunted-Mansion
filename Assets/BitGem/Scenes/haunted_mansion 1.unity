@@ -10466,6 +10466,7 @@ MonoBehaviour:
   - {fileID: 2097204443}
   - {fileID: 1646175013}
   gameOverText: {fileID: 272874814}
+  startMenu: {fileID: 0}
 --- !u!136 &601855913
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -10555,6 +10556,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   startMenuCanvas: {fileID: 610264560}
   difficultyDropdown: {fileID: 1730045450}
+  gameStarted: 0
 --- !u!114 &610264562
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17578,6 +17580,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   possessionInterval: 60
   player: {fileID: 601855907}
+  scrapingSound: {fileID: 8300000, guid: 9b1f284a567064db79766ef2720a2697, type: 3}
 --- !u!4 &1013540354
 Transform:
   m_ObjectHideFlags: 0
