@@ -18,6 +18,8 @@ public class StartMenu : MonoBehaviour
         // Freeze the game by setting timescale to 0
         Time.timeScale = 0f;
 
+        Cursor.visible = true;
+
         // Make sure the canvas is active at the start
         if (startMenuCanvas != null)
             startMenuCanvas.SetActive(true);
@@ -28,6 +30,8 @@ public class StartMenu : MonoBehaviour
     {
         // Unfreeze the game
         Time.timeScale = 1f;
+
+        Cursor.visible = false;
 
         // Hide the Start Menu
         if (startMenuCanvas != null)
