@@ -34,16 +34,33 @@ public class PossessionManager : MonoBehaviour
                 currentPosessedScript.StopPosession();
             }
 
-            GameObject newPossessedObject = possessableObjects[Random.Range(0, possessableObjects.Count)];
+            // Filter list to only include nearby objects
+            List<GameObject> nearbyObjects = new List<GameObject>();
+            foreach (GameObject obj in possessableObjects)
+            {
+                if (Vector3.Distance(player.position, obj.transform.position) <= 20f)
+                {
+                    nearbyObjects.Add(obj);
+                }
+            }
 
-            // Ensure object has a PossessedObject script or add one
+            if (nearbyObjects.Count == 0)
+            {
+                Debug.LogWarning("No possessable objects within 15 units of the player.");
+                yield return new WaitForSeconds(possessionInterval);
+                continue;
+            }
+
+            GameObject newPossessedObject = nearbyObjects[Random.Range(0, nearbyObjects.Count)];
+
+            // Ensure object has a PossessedObject script
             currentPosessedScript = newPossessedObject.GetComponent<PossessedObject>();
             if (currentPosessedScript == null)
             {
                 currentPosessedScript = newPossessedObject.AddComponent<PossessedObject>();
             }
 
-            // 🔊 Dynamically add AudioSource if needed
+            // Add AudioSource if needed
             AudioSource audioSource = newPossessedObject.GetComponent<AudioSource>();
             if (audioSource == null)
             {
@@ -55,11 +72,12 @@ public class PossessionManager : MonoBehaviour
                 audioSource.minDistance = 2f;
                 audioSource.maxDistance = 20f;
             }
+
             currentPosessedScript.scapeSound = scrapingSound;
-            
             currentPosessedScript.StartPosession(player);
 
             yield return new WaitForSeconds(possessionInterval);
         }
-    } 
+    }
+
 }
