@@ -11,6 +11,9 @@ public class PossessedObject : MonoBehaviour
     private bool canMove = true;
     private AudioSource audioSource;
 
+    private float timeSinceLastSeen = 0f;
+    public float unseenThreshold = 0.5f; // Seconds object must remain unseen before moving
+
     void Start()
     {
         // Get reference to audio source on this object
@@ -71,13 +74,23 @@ public class PossessedObject : MonoBehaviour
             return;
         }
 
-        if (CanPlayerSeeMe())
+        bool seen = CanPlayerSeeMe();
+        if (seen)
         {
             canMove = false;
+            timeSinceLastSeen = 0f;
         }
         else
         {
-            canMove = true;
+            timeSinceLastSeen += Time.deltaTime;
+            if (timeSinceLastSeen >= unseenThreshold)
+            {
+                canMove = true;
+            }
+            else
+            {
+                canMove = false;
+            }
         }
 
         if (canMove && enabled)
@@ -107,20 +120,43 @@ public class PossessedObject : MonoBehaviour
 
     bool CanPlayerSeeMe()
     {
-        Vector3 directionToPlayer = (player.position - transform.position).normalized;
+        Vector3 toObject = (transform.position - player.position);
+        float distance = toObject.magnitude;
+        Vector3 direction = toObject.normalized;
 
-        if (Physics.Raycast(transform.position, directionToPlayer, out RaycastHit hit, detectionRange))
+        float angle = Vector3.Angle(player.forward, direction);
+        float fieldOfView = 60f;
+        if (angle > fieldOfView / 2f)
+            return false; // Not in FOV
+
+        // Cast multiple rays: center + offset directions
+        Vector3[] offsets = new Vector3[]
         {
-            if (hit.transform != player)
+            Vector3.zero, // center
+            Vector3.up * 0.5f,
+            Vector3.down * 0.5f,
+            Vector3.left * 0.5f,
+            Vector3.right * 0.5f
+        };
+
+        foreach (var offset in offsets)
+        {
+            Vector3 rayOrigin = player.position + offset;
+            Vector3 rayDir = (transform.position - rayOrigin).normalized;
+
+            if (Physics.Raycast(rayOrigin, rayDir, out RaycastHit hit, distance))
             {
-                return false; // There's an obstacle in the way
+                if (hit.transform == transform)
+                {
+                    return true; // At least one ray hits directly
+                }
             }
         }
 
-        // Dot product check for player's facing direction
-        float dotProduct = Vector3.Dot(player.forward, -directionToPlayer);
-        return dotProduct > 0.5f; // Fine-tune this threshold
+        return false;
     }
+
+
 
     // Detect collision with player
     private void OnTriggerEnter(Collider other)
