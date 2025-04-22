@@ -12,7 +12,7 @@ public class TriggerDoorController : MonoBehaviour
     {
         if (Vector3.Distance(transform.position, player.position) <= detectionRange)
         {
-            if (Input.GetKeyDown(KeyCode.Return))
+            if (Input.GetMouseButtonDown(0)) // updated to left click on mouse
             {
                 if (isDoorOpen)
                 {

@@ -8,10 +8,9 @@ public class PlayerScore : MonoBehaviour
     public GameObject unlitBulbPrefab; // Assign prefab for unlit bulb UI
     public GameObject litBulbPrefab;   // Assign prefab for lit bulb UI
     public Transform bulbContainer;    // UI parent with Horizontal Layout Group
-
-    private int score = 0;
-    private int totalLights;
-    private int lightsFixed;
+    public int score = 0;
+    public int totalLights;
+    public int lightsFixed;
     private GameObject[] dynamicUnlitBulbs;
     private GameObject[] dynamicLitBulbs;
     private GameObject[] lightObjects;
@@ -60,7 +59,7 @@ public class PlayerScore : MonoBehaviour
         }
     }
 
-     // Call this when the player takes damage
+    // Call this when the player takes damage
     public void TakeDamage()
     {
         score -= 5; // Decrease score by 5

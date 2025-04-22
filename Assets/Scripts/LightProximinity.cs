@@ -32,8 +32,8 @@ public class LightProximinity : MonoBehaviour
     }
 
     void Update()
-    {
-        if (playerNearby && Input.GetKeyDown(KeyCode.Return) && !isFixingLight)
+    { 
+        if (playerNearby && Input.GetMouseButtonDown(0) && !isFixingLight) // changed to mouse click
         {
             StartCoroutine(FixLight());
         }
