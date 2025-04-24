@@ -18,7 +18,7 @@ public class DoorController : MonoBehaviour
         if (isOpen || playerScore == null) return;
 
         // WIN CONDITION ─ all bulbs placed
-        if (playerScore.lightsFixed == playerScore.totalLights-1) // seems to count 12 lights had to fix
+        if (playerScore.lightsFixed == playerScore.totalLights) 
         {
             Debug.Log("Win state triggered");
             OpenDoorSequence();

@@ -1,4 +1,3 @@
-// PlayerScore.cs
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -12,7 +11,8 @@ public class PlayerScore : MonoBehaviour
     public TMP_Text scoreText;            
     public GameObject unlitBulbPrefab;    
     public GameObject litBulbPrefab;      
-    public Transform bulbContainer;       
+    public Transform bulbContainer;    
+    public TextMeshProUGUI winText;   // assign a full-screen or centered UI TextMeshProUGUI that says “Escape” and disable it in the Inspector   
 
     public enum Difficulty { Easy, Medium, Hard }
     public Difficulty difficulty = Difficulty.Hard;
@@ -63,11 +63,39 @@ public class PlayerScore : MonoBehaviour
     public void SetDifficulty(Difficulty d)
     {
         difficulty = d;
-        RebuildStartingLights();
+        
+        if (!Application.isPlaying)
+        {
+            // In Editor or before Play: full rebuild
+            RebuildStartingLights();
+        }
+        else
+        {
+            // At runtime: only update fixed states and icons
+            // 1) reset all fixed states
+            for (int i = 0; i < totalLights; i++)
+                lightFixedStates[i] = false;
 
-        // tell every lamp to re‐init itself
-        foreach (var lamp in FindObjectsOfType<LightProximinity>())
-            lamp.ResetLamp();
+            // 2) pick new pre-fixed lights based on difficulty
+            int startLights = difficulty == Difficulty.Medium ? 1
+                            : difficulty == Difficulty.Easy   ? 3
+                            : 0;
+            var indices = new List<int>();
+            for (int i = 0; i < totalLights; i++) indices.Add(i);
+            for (int j = 0; j < startLights && indices.Count > 0; j++)
+            {
+                int idx = indices[Random.Range(0, indices.Count)];
+                indices.Remove(idx);
+                lightFixedStates[idx] = true;
+            }
+
+            // 3) update only the UI icons
+            UpdateLightIcons();
+
+     
+            // 4) Hand off to LightManager so ResetLamp/ReinitializeLamps only runs once
+            LightManager.Instance?.ReinitializeLamps();
+        }
     }
 
     private void RebuildStartingLights()
@@ -117,12 +145,15 @@ public class PlayerScore : MonoBehaviour
             indices.Remove(idx);
             FixLight(idx);
         }
+
+        if (winText != null)
+            winText.enabled = false;
     }
 
     public void FixLight(int lightIndex)
     {
-        if (lightIndex < 0 || lightIndex >= totalLights) return;
-        if (lightFixedStates[lightIndex]) return;
+        // if (lightIndex < 0 || lightIndex >= totalLights) return;
+        // if (lightFixedStates[lightIndex]) return;
 
         lightFixedStates[lightIndex] = true;
         lightsFixed++;
@@ -131,6 +162,11 @@ public class PlayerScore : MonoBehaviour
 
         dynamicUnlitBulbs[lightIndex].SetActive(false);
         dynamicLitBulbs[lightIndex].SetActive(true);
+
+        if (lightsFixed == totalLights && winText != null)
+        {
+            winText.enabled = true;
+        }
     }
 
     public void TakeDamage()
@@ -147,4 +183,26 @@ public class PlayerScore : MonoBehaviour
     }
 
     public int GetLightsFixed() => lightsFixed;
+
+    /// <summary>
+    /// Toggle each unlit/lit icon to match lightFixedStates[].
+    /// Call this whenever lightFixedStates changes (e.g. on difficulty change).
+    /// </summary>
+    public void UpdateLightIcons()
+    {
+        for (int i = 0; i < totalLights; i++)
+        {
+            bool fixedState = lightFixedStates[i];
+            dynamicLitBulbs[i].SetActive(fixedState);
+            dynamicUnlitBulbs[i].SetActive(!fixedState);
+        }
+    }
+
+     /// <summary>
+    /// Expose the current difficulty so other scripts can query it.
+    /// </summary>
+    public Difficulty GetDifficulty()
+    {
+        return difficulty;
+    }
 }

@@ -5,55 +5,82 @@ using TMPro;
 
 public class LightProximinity : MonoBehaviour
 {
-    private bool playerNearby      = false;
-    private bool isFixingLight     = false;
-    private bool isFixed           = false;
-    private int  brokenChildIndex  = -1;
+    private bool playerNearby     = false;
+    private bool isFixingLight    = false;
+    private bool isFixed          = false;
+    private int  brokenChildIndex = -1;
+    private int  lampIndex        = -1;
 
-    public InputManager instance   = null;
-    private PlayerScore playerScore;
     public TextMeshProUGUI lightFixingText;
+    private PlayerScore playerScore;
+    private PlayerScore.Difficulty lastDifficulty;
 
-    // Flicker settings
-    public float minOffTime = 1f;
-    public float maxOffTime = 5f;
-    public float minOnTime  = 0.1f;
-    public float maxOnTime  = 0.5f;
+    // Flicker timing
+    public float minOffTime = 5f;
+    public float maxOffTime = 25f;
+    public float minOnTime  = 0.2f;
+    public float maxOnTime  = 0.6f;
+
+    void Awake()
+    {
+        // Make sure we grab PlayerScore before any ResetLamp calls
+        playerScore = FindObjectOfType<PlayerScore>();
+    }
 
     void Start()
     {
-        instance        = GetComponent<InputManager>();
-        playerScore     = FindObjectOfType<PlayerScore>();
+        // Now that Awake has run, it's safe to finish setup
         lightFixingText = GameObject
             .Find("FixingLightIndicator")
             .GetComponent<TextMeshProUGUI>();
         lightFixingText.enabled = false;
 
-        // Kick off init that respects pre-fixed lamps
-        StartCoroutine(InitializeLamp());
+        // Cache our index in the PlayerScore arrays
+        lampIndex = System.Array.IndexOf(
+            playerScore.LightObjects, this.gameObject);
+
+        // Initialize lastDifficulty and visuals
+        lastDifficulty = playerScore.GetDifficulty();
+        ResetLamp();
+    }
+
+    void Update()
+    {
+        // 1) Detect a difficulty change
+        var currentDiff = playerScore.GetDifficulty();
+        if (currentDiff != lastDifficulty)
+        {
+            Debug.Log($"Difficulty changed from {lastDifficulty} to {currentDiff}");
+            lastDifficulty = currentDiff;
+            ResetLamp();
+            return; // skip fix-input this frame
+        }
+
+        // 2) Handle “click to fix” when player is in range
+        if (playerNearby &&
+            !isFixingLight &&
+            !isFixed &&
+            Input.GetMouseButtonDown(0))
+        {
+            StartCoroutine(FixLight());
+        }
     }
 
     IEnumerator InitializeLamp()
     {
-        // Wait one frame so PlayerScore has applied difficulty fixes
+        // wait one frame so PlayerScore.LightFixedStates is up to date
         yield return null;
 
-        // Which lamp index am I?
-        int lampIndex = System.Array.IndexOf(
-            playerScore.LightObjects, this.gameObject);
-
-        // If that index was pre-fixed, turn on permanently
-        if (lampIndex >= 0 
-            && lampIndex < playerScore.LightFixedStates.Length
-            && playerScore.LightFixedStates[lampIndex])
+        if (lampIndex >= 0 && playerScore.LightFixedStates[lampIndex])
         {
+            // pre-fixed by difficulty
             isFixed = true;
             for (int i = 0; i < transform.childCount; i++)
                 transform.GetChild(i).gameObject.SetActive(true);
         }
         else
         {
-            // Otherwise start all bulbs off...
+            // set all off, pick one to flicker
             for (int i = 0; i < transform.childCount; i++)
                 transform.GetChild(i).gameObject.SetActive(false);
 
@@ -63,13 +90,23 @@ public class LightProximinity : MonoBehaviour
         }
     }
 
-    // Called by LightManager when difficulty or UI changes
+    /// <summary>
+    /// Called from LightManager.ReinitializeLamps(), or on Start(), to reset and re-init this lamp.
+    /// </summary>
     public void ResetLamp()
     {
         StopAllCoroutines();
         isFixed          = false;
         isFixingLight    = false;
         brokenChildIndex = -1;
+
+        // Guard in case Awake/Start order hasn't assigned playerScore yet
+        if (playerScore == null)
+            playerScore = FindObjectOfType<PlayerScore>();
+
+        // Re-sync so our next Update() diff-check only fires on *new* changes
+        lastDifficulty = playerScore.GetDifficulty();
+
         StartCoroutine(InitializeLamp());
     }
 
@@ -85,32 +122,14 @@ public class LightProximinity : MonoBehaviour
             playerNearby = false;
     }
 
-    void Update()
-    {
-        if (playerNearby 
-            && Mouse.current.leftButton.wasPressedThisFrame 
-            && !isFixingLight 
-            && !isFixed)
-        {
-            StartCoroutine(FixLight());
-        }
-    }
-
     IEnumerator FlickerLoop()
     {
-        GameObject bulb = transform.GetChild(brokenChildIndex).gameObject;
+        var bulb = transform.GetChild(brokenChildIndex).gameObject;
         while (!isFixed)
         {
-            // off period
-            yield return new WaitForSeconds(
-                Random.Range(minOffTime, maxOffTime));
-
-            // flicker on
+            yield return new WaitForSeconds(Random.Range(minOffTime, maxOffTime));
             bulb.SetActive(true);
-            yield return new WaitForSeconds(
-                Random.Range(minOnTime, maxOnTime));
-
-            // then off again
+            yield return new WaitForSeconds(Random.Range(minOnTime,  maxOnTime));
             if (!isFixed)
                 bulb.SetActive(false);
         }
@@ -125,30 +144,19 @@ public class LightProximinity : MonoBehaviour
         // simulate fix time
         yield return new WaitForSeconds(4f);
 
-        // make sure that bulb stays on
-        if (brokenChildIndex >= 0)
-        {
-            var bulb = transform.GetChild(brokenChildIndex).gameObject;
-            if (!bulb.activeSelf)
-                bulb.SetActive(true);
+        // Ensure the bulb stays lit
+        var bulb = transform.GetChild(brokenChildIndex).gameObject;
+        bulb.SetActive(true);
 
-            // notify PlayerScore
-            playerScore?.FixLight(brokenChildIndex);
-        }
+        if (lampIndex >= 0)
+            playerScore.FixLight(lampIndex);
 
-        isFixed        = true;
-        isFixingLight  = false;
+        isFixed       = true;
+        isFixingLight = false;
         lightFixingText.enabled = false;
         EnablePlayerInput();
     }
 
-    void DisablePlayerInput()
-    {
-        InputManager.DisableInput();
-    }
-
-    void EnablePlayerInput()
-    {
-        InputManager.EnableInput();
-    }
+    void DisablePlayerInput() => InputManager.DisableInput();
+    void EnablePlayerInput()  => InputManager.EnableInput();
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI; // If you use Button/Dropdown from the built-in UI
 using TMPro;
 using System;          // If you use TextMeshPro elements
+using System.Collections.Generic;  // ← for List<string>
 
 public class StartMenu : MonoBehaviour
 {
@@ -30,6 +31,27 @@ public class StartMenu : MonoBehaviour
         // Make sure the canvas is active at the start
         if (startMenuCanvas != null)
             startMenuCanvas.SetActive(true);
+
+        // ── Setup dropdown labels/order and fire the initial difficulty ──
+        if (difficultyDropdown != null)
+        {
+            // 1) Force exactly [Easy, Medium, Hard]
+            difficultyDropdown.ClearOptions();
+            difficultyDropdown.AddOptions(new List<string> { "Easy", "Medium", "Hard" });
+
+            // 2) Wire up our handler
+            difficultyDropdown.onValueChanged.AddListener(OnDifficultyChanged);
+
+            // 3) Sync to whatever PlayerScore currently has
+            var ps = FindObjectOfType<PlayerScore>();
+            int current = ps != null
+                ? (int)ps.GetDifficulty()
+                : 0;
+            difficultyDropdown.value = current;
+
+            // 4) Apply it once so lamps light up immediately
+            OnDifficultyChanged(current);
+        }
     }
 
     // This will be called by the "Start Game" button
@@ -53,6 +75,9 @@ public class StartMenu : MonoBehaviour
         // 'value' corresponds to the index of the dropdown option
         // Implement your own logic here for difficulty
         playerHealth.SetLives();
+
+        // tell LightManager to update world‐space lamps for this difficulty
+        LightManager.Instance?.OnDifficultyChanged(value);
 
         switch(difficultyDropdown.value)
         {
