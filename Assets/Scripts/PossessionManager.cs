@@ -84,41 +84,49 @@ public class PossessionManager : MonoBehaviour
     // Spawn more objects on win cond
     public void SpawnExtraPossessions(int count)
     {
-        // Filter list to only include nearby objects
-            List<GameObject> nearbyObjects = new List<GameObject>();
-            foreach (GameObject obj in possessableObjects)
-            {
-                if (Vector3.Distance(player.position, obj.transform.position) <= 20f)
-                {
-                    nearbyObjects.Add(obj);
-                }
-            }
+        // 1. Build a nearby‑and‑not‑already‑possessed list
+        List<GameObject> nearby = new List<GameObject>();
 
-        for (int i = 0; i < count; i++)
+        foreach (GameObject obj in possessableObjects)
         {
-            GameObject obj = nearbyObjects[Random.Range(0, nearbyObjects.Count)];
+            if (obj == currentPosessedScript?.gameObject) continue;              // skip the one already possessed
+            if (Vector3.Distance(player.position, obj.transform.position) > 20f) continue; // too far away?
 
-            // Make sure we don't double‑possess the same one
-            PossessedObject script = obj.GetComponent<PossessedObject>();
-            if (script == currentPosessedScript) { i--; continue; }
+            nearby.Add(obj);
+        }
 
-            // Ensure it has a script & audio source (reuse earlier logic)
-            script = obj.GetComponent<PossessedObject>() ?? obj.AddComponent<PossessedObject>();
-            AudioSource audioSource = obj.GetComponent<AudioSource>();
-            if (audioSource == null)
+        // 2. If nothing to spawn, bail early
+        if (nearby.Count == 0) return;
+
+        // 3. Spawn up to <count> new possessions
+        for (int i = 0; i < count && nearby.Count > 0; i++)
+        {
+            // Pick a random candidate and remove it from the list so we never pick it again
+            int index          = Random.Range(0, nearby.Count);
+            GameObject obj     = nearby[index];
+            nearby.RemoveAt(index);
+
+            // Get or add the PossessedObject script
+            PossessedObject script = obj.GetComponent<PossessedObject>() ??
+                                    obj.AddComponent<PossessedObject>();
+
+            // Get or add the AudioSource
+            AudioSource audio = obj.GetComponent<AudioSource>();
+            if (audio == null)
             {
-                audioSource = obj.AddComponent<AudioSource>();
-                audioSource.clip = scrapingSound;
-                audioSource.loop = true;
-                audioSource.playOnAwake = false;
-                audioSource.spatialBlend = 1f;
-                audioSource.minDistance = 2f;
-                audioSource.maxDistance = 20f;
+                audio = obj.AddComponent<AudioSource>();
+                audio.loop          = true;
+                audio.playOnAwake   = false;
+                audio.spatialBlend  = 1f;
+                audio.minDistance   = 2f;
+                audio.maxDistance   = 20f;
             }
 
+            audio.clip        = scrapingSound;
             script.scapeSound = scrapingSound;
+
             script.StartPosession(player);
         }
     }
-
+    
 }
