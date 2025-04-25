@@ -21,6 +21,10 @@ public class LightProximinity : MonoBehaviour
     public float minOnTime  = 0.2f;
     public float maxOnTime  = 0.6f;
 
+    [Header("SFX")]
+    public AudioClip fixLightClip;     // drag in your equipment sound
+    private AudioSource sfxSource;
+
     void Awake()
     {
         // Make sure we grab PlayerScore before any ResetLamp calls
@@ -34,6 +38,16 @@ public class LightProximinity : MonoBehaviour
             .Find("FixingLightIndicator")
             .GetComponent<TextMeshProUGUI>();
         lightFixingText.enabled = false;
+
+        // Ensure each lamp has its own AudioSource for 3D spatial SFX
+        sfxSource = GetComponent<AudioSource>();
+        if (sfxSource == null)
+            sfxSource = gameObject.AddComponent<AudioSource>();
+        sfxSource.playOnAwake  = false;
+        sfxSource.loop         = false;
+        sfxSource.spatialBlend = 1f;       // fully 3D
+        sfxSource.minDistance  = 1f;       // falloff starts at 1 unit
+        sfxSource.maxDistance  = 5f;      // cut off by 15 units
 
         // Cache our index in the PlayerScore arrays
         lampIndex = System.Array.IndexOf(
@@ -140,6 +154,10 @@ public class LightProximinity : MonoBehaviour
         isFixingLight = true;
         lightFixingText.enabled = true;
         DisablePlayerInput();
+
+        // ── PLAY 3D FIX SOUND ──
+        if (fixLightClip != null)
+            sfxSource.PlayOneShot(fixLightClip);
 
         // simulate fix time
         yield return new WaitForSeconds(4f);
