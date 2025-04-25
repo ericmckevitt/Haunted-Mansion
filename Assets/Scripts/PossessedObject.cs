@@ -2,73 +2,127 @@ using UnityEngine;
 
 public class PossessedObject : MonoBehaviour
 {
-    public Transform player;     // Reference to the player
-    public float moveSpeed = 2f; // Movement speed of the possessed object
-    public float detectionRange = 30f; // Range within which the object can move
+    [Header("Chase Settings")]
+    public Transform player;               // Who we're chasing
+    public float moveSpeed = 2f;           // How fast we move
+    public float detectionRange = 40f;     // Only active within this range
+
+    [Header("Audio")]
     public AudioClip scapeSound;
-    public StartMenu gameState;
+    public StartMenu gameState;            // To know if the game has started
 
-    private bool canMove = true;
+    [Header("Visibility & Movement")]
+    public float unseenThreshold = 0.5f;   // Seconds unseen before we move
+
     private AudioSource audioSource;
-
+    private bool canMove = false;
+    private bool justPossessed = false;    // For the one-frame bypass
     private float timeSinceLastSeen = 0f;
-    public float unseenThreshold = 0.5f; // Seconds object must remain unseen before moving
+
+    void Awake()
+    {
+        // **CRUCIAL** ensure we grab the StartMenu on creation
+        gameState = FindObjectOfType<StartMenu>();
+        if (gameState == null)
+            Debug.LogWarning($"{name}: Awake() couldn’t find a StartMenu!");
+    }
 
     void Start()
     {
-        // Get reference to audio source on this object
+        // Cache our AudioSource (Awake only handled gameState)
         audioSource = GetComponent<AudioSource>();
-        if (gameState == null)
-        {
-            gameState = FindObjectOfType<StartMenu>();
-        }
     }
 
-    public void StartPosession(Transform newPlayer) {
-        player = newPlayer;
-        enabled = true;
+    /// <summary>
+    /// Called by PossessionManager when this object becomes possessed.
+    /// </summary>
+    public void StartPosession(Transform newPlayer)
+    {
+        // In case Awake didn’t run (or was skipped), double-check here too
+        if (gameState == null)
+            gameState = FindObjectOfType<StartMenu>();
 
-        // Ensure we have a working AudioSource
+        player   = newPlayer;
+        enabled  = true;
+        justPossessed     = true;
+        timeSinceLastSeen = unseenThreshold;
+        canMove           = false;
+
         if (audioSource == null)
-            audioSource = GetComponent<AudioSource>();
+            audioSource = gameObject.AddComponent<AudioSource>();
 
-        if (audioSource != null && scapeSound != null)
-        {
-            audioSource.clip = scapeSound;
-            // Only play if the game has started
-            if (gameState != null && gameState.gameStarted && !audioSource.isPlaying)
-            {
-                audioSource.Play();
-            }
-        }
+        audioSource.clip         = scapeSound;
+        audioSource.loop         = true;
+        audioSource.playOnAwake  = false;
+        audioSource.spatialBlend = 1f;
+        audioSource.minDistance  = 2f;
+        audioSource.maxDistance  = detectionRange;
 
-        Debug.Log("Possessed object: " + gameObject.name);
-        Update(); //seems to catch bug where it dosent start moving again right away
+        if (gameState != null && gameState.gameStarted)
+            audioSource.Play();
+
+        // Give one immediate step without waiting for the next Update frame
+        ForceChaseStep();
+
+        Debug.Log($"Possession started on: {gameObject.name}");
+    }
+
+    private void ForceChaseStep()
+    {
+        if (player == null) return;
+        Vector3 dir = (player.position - transform.position).normalized;
+        transform.position += dir * moveSpeed * Time.deltaTime;
+        if (audioSource != null && !audioSource.isPlaying && gameState.gameStarted)
+            audioSource.Play();
     }
 
     public void StopPosession()
     {
-        enabled = false; 
-
+        enabled = false;
+        justPossessed = false;
         if (audioSource != null && audioSource.isPlaying)
             audioSource.Stop();
     }
 
-    // Update is called once per frame
     void Update()
     {
-        if (player == null) return;
-
-        if (gameState == null || !gameState.gameStarted)
+        // **Re-grab** gameState if somehow lost
+        if (gameState == null)
         {
+            gameState = FindObjectOfType<StartMenu>();
+            if (gameState == null)
+            {
+                Debug.LogError($"{name}: Update() still can’t find a StartMenu—aborting.");
+                return;
+            }
+        }
+
+        // 1) Don’t do anything until the player hits Start
+        if (!gameState.gameStarted)
+        {
+            Debug.Log($"Breaking out update early :/ gameStarted = false");
             if (audioSource != null && audioSource.isPlaying)
                 audioSource.Stop();
             return;
         }
 
+        // 2) First‐frame bypass
+        if (justPossessed)
+        {
+            justPossessed = false;
+            Vector3 dir = (player.position - transform.position).normalized;
+            transform.position += dir * moveSpeed * Time.deltaTime;
+            if (audioSource != null && !audioSource.isPlaying)
+                audioSource.Play();
+            Debug.Log("past first frame check");
+            return;
+        }
+
+        // 3) Normal chase logic
         float dist = Vector3.Distance(transform.position, player.position);
         if (dist > detectionRange)
         {
+            Debug.Log("Dist > detectionRange, returning - prob fel thru floor");
             if (audioSource != null)
                 audioSource.volume = 0f;
             return;
@@ -83,98 +137,59 @@ public class PossessedObject : MonoBehaviour
         else
         {
             timeSinceLastSeen += Time.deltaTime;
-            if (timeSinceLastSeen >= unseenThreshold)
-            {
-                canMove = true;
-            }
-            else
-            {
-                canMove = false;
-            }
+            canMove = (timeSinceLastSeen >= unseenThreshold);
         }
 
-        if (canMove && enabled)
+        if (canMove)
         {
-            MoveTowardPlayer();
-
-            float proximity = detectionRange - dist; // Closer => larger value
-            float k = 0.2f; // Curve factor; increase to steepen volume ramp-up
-
-            // Exponential volume curve: starts low, ramps up quickly near the player
-            float volume = 1f - Mathf.Exp(-k * proximity);
-            volume = Mathf.Clamp01(volume);
-            audioSource.volume = volume;
-
-            if (!audioSource.isPlaying)
-                audioSource.Play();
+            Debug.Log("Moving!");
+            Vector3 dir = (player.position - transform.position).normalized;
+            transform.position += dir * moveSpeed * Time.deltaTime;
+            if (audioSource != null)
+            {
+                float volume = 1f - Mathf.Exp(-0.2f * (detectionRange - dist));
+                audioSource.volume = Mathf.Clamp01(volume);
+                if (!audioSource.isPlaying) audioSource.Play();
+            }
         }
-        else
+        else if (audioSource != null && audioSource.isPlaying)
         {
-            if (audioSource != null && audioSource.isPlaying)
-                audioSource.Pause();
+            audioSource.Pause();
         }
-
-        //Debug.Log($"Distance: {dist}, Volume: {audioSource.volume}");
     }
 
-
-    bool CanPlayerSeeMe()
+    private bool CanPlayerSeeMe()
     {
-        Vector3 toObject = (transform.position - player.position);
-        float distance = toObject.magnitude;
-        Vector3 direction = toObject.normalized;
+        Vector3 toMe   = transform.position - player.position;
+        float distance = toMe.magnitude;
+        if (Vector3.Angle(player.forward, toMe) > 30f) return false;
 
-        float angle = Vector3.Angle(player.forward, direction);
-        float fieldOfView = 60f;
-        if (angle > fieldOfView / 2f)
-            return false; // Not in FOV
-
-        // Cast multiple rays: center + offset directions
-        Vector3[] offsets = new Vector3[]
-        {
-            Vector3.zero, // center
-            Vector3.up * 0.5f,
-            Vector3.down * 0.5f,
-            Vector3.left * 0.5f,
+        Vector3[] offsets = {
+            Vector3.zero, Vector3.up * 0.5f,
+            Vector3.down * 0.5f, Vector3.left * 0.5f,
             Vector3.right * 0.5f
         };
 
-        foreach (var offset in offsets)
+        foreach (var off in offsets)
         {
-            Vector3 rayOrigin = player.position + offset;
-            Vector3 rayDir = (transform.position - rayOrigin).normalized;
-
-            if (Physics.Raycast(rayOrigin, rayDir, out RaycastHit hit, distance))
-            {
-                if (hit.transform == transform)
-                {
-                    return true; // At least one ray hits directly
-                }
-            }
+            Vector3 origin = player.position + off;
+            if (Physics.Raycast(origin, (transform.position - origin).normalized,
+                                out var hit, distance) &&
+                hit.transform == transform)
+                return true;
         }
-
         return false;
     }
 
-
-
-    // Detect collision with player
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player")) // ensure the "Player" tag
+        if (!enabled) return;
+        if (other.CompareTag("Player"))
         {
             StopPosession();
             Debug.Log("Possessed object hit the player!");
-
-            other.GetComponent<PlayerHealth>().TakeDamage(); // Call TakeDamage function in player health to lose a heart
-            other.GetComponent<PlayerScore>().TakeDamage(); // Call TakeDamage function in player score to lose points
+            other.GetComponent<PlayerHealth>()?.TakeDamage();
+            other.GetComponent<PlayerScore>()?.TakeDamage();
         }
-
-    }
-
-    void MoveTowardPlayer()
-    {
-        Vector3 direction = (player.position - transform.position).normalized;
-        transform.position += direction * moveSpeed * Time.deltaTime;
     }
 }

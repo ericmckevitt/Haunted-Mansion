@@ -52,6 +52,8 @@ public class PlayerHealth : MonoBehaviour
     {
         gameOverText.SetActive(true); // Show the Game Over text
         // Optionally, you can stop player movement or restart the level here
+        InputManager.DisableInput();
+        Time.timeScale = 0f; // freeze game too, no noise plz
     }
 
     public void SetLives() {

@@ -93,7 +93,15 @@ public class PlayerScore : MonoBehaviour
             UpdateLightIcons();
 
      
-            // 4) Hand off to LightManager so ResetLamp/ReinitializeLamps only runs once
+            // 4) update the fixed count & score so win condition can fire
+            lightsFixed = 0;
+            for (int i = 0; i < totalLights; i++)
+                if (lightFixedStates[i])
+                    lightsFixed++;
+            score = lightsFixed * 10;
+            UpdateScoreUI();
+
+            // 5) tell all world lamps to re-init with the new fixed states
             LightManager.Instance?.ReinitializeLamps();
         }
     }
@@ -162,6 +170,8 @@ public class PlayerScore : MonoBehaviour
 
         dynamicUnlitBulbs[lightIndex].SetActive(false);
         dynamicLitBulbs[lightIndex].SetActive(true);
+
+        Debug.Log($"lights fixed = {lightsFixed}");
 
         if (lightsFixed == totalLights && winText != null)
         {
